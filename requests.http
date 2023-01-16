@@ -1,0 +1,12 @@
+@host=http://localhost:8080
+
+POST {{host}}/exercisedatapoint
+Content-Type: application/json
+
+ {
+     "weightLbs": 215,
+     "bodyFatPercentage": 12.2,
+     "exerciseType": "BACK_SQUAT",
+     "repRange": "FIVE_REPS",
+     "maximumWeightAchieved": 250.1
+ }
