@@ -5,11 +5,13 @@ public enum ExerciseType {
     BACK_SQUAT("BACKSQUAT"),
     FRONT_SQUAT("FRONTSQUAT"),
     OVERHEAD_PRESS("OVERHEADPRESS"),
-    BARBELL_ROW("BARBELLROW");
+    BARBELL_ROW("BARBELLROW"),
+    DEAD_LIFT("DEADLIFT");
 
     private final String name;
 
-    public String getName() {
+    @Override
+    public String toString() {
         return name;
     }
 
@@ -21,7 +23,7 @@ public enum ExerciseType {
         for (ExerciseType e: ExerciseType.values()) {
             if (e.name.equals(name)) return e;
         }
-        throw new IllegalAccessException("No ExerciseType can be parsed from: " + name);
+        throw new IllegalAccessException(String.format("No %s can be parsed from: %s", ExerciseType.class.getName(), name));
     }
 
 }

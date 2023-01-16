@@ -2,17 +2,18 @@ package io.michaelarnold.healthtracker.data;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import io.michaelarnold.healthtracker.config.ApplicationConfiguration;
 import io.michaelarnold.healthtracker.exceptions.HealthTrackerInfrastructureException;
 import io.michaelarnold.healthtracker.model.ExerciseDataPoint;
 import io.michaelarnold.healthtracker.model.ExerciseType;
+import io.michaelarnold.healthtracker.model.RepRange;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
+import java.lang.reflect.Field;
+import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Log4j2
@@ -23,30 +24,55 @@ public class ExerciseDataPointDynamoDbRepository implements ExerciseDataPointRep
     AmazonDynamoDB amazonDynamoDB;
 
     @Override
-    public List<ExerciseDataPoint> getExerciseDataPoints(ExerciseType exerciseType) {
-        log.info("About to fetch exercise data points for: " + exerciseType.getName());
-        Map<String, AttributeValue> key = new HashMap<>();
-        key.put(ApplicationConfiguration.HEALTH_TRACKER_PRIMARY_KEY_NAME,
-                new AttributeValue(exerciseType.getName()));
-        GetItemRequest request = new GetItemRequest()
-                .withKey(key)
-                .withTableName(ApplicationConfiguration.HEALTH_TRACKER_TABLE_NAME);
-        AttributeValue attributeValue = null;
-        try {
-            Map<String, AttributeValue> result = amazonDynamoDB.getItem(request).getItem();
-            for (var e: result.entrySet()) {
-                log.info("KEY: " + e.getKey());
-                log.info("VAL: " + e.getValue());
+    public ExerciseDataPoint add(ExerciseDataPoint exerciseDataPoint) {
+
+        exerciseDataPoint.setLogTime(LocalDateTime.now());
+
+        Map<String, AttributeValue> attributeMap = new HashMap<>();
+        for (Field f: exerciseDataPoint.getClass().getDeclaredFields()) {
+            f.setAccessible(true);
+            String attributeName = f.getName();
+            log.info("Name: " + attributeName);
+            FieldType fieldType;
+            Class<?> clazz = f.getType();
+            try {
+                fieldType = FieldType.fromClass(clazz);
+                String attributeString  = f.get(exerciseDataPoint).toString();
+                AttributeValue attributeValue = new AttributeValue();
+                switch (fieldType) {
+                    case FLOAT, INTEGER ->  {
+                        attributeValue.setN(attributeString);
+                    }
+                    case LOCAL_DATE_TIME, EXERCISE_TYPE, REP_RANGE -> {
+                        attributeValue.setS(attributeString);
+                    }
+                }
+                attributeMap.put(attributeName, attributeValue);
+            } catch (IllegalAccessException e) {
+                throw new HealthTrackerInfrastructureException("Cannot parse class: " + clazz.getName() + " into field type");
+            } finally {
+                f.setAccessible(false);
             }
-        } catch (Exception e) {
-            log.error(generateExceptionMessage(e));
-            throw new HealthTrackerInfrastructureException(generateExceptionMessage(e));
         }
+        amazonDynamoDB.putItem(ApplicationConfiguration.HEALTH_TRACKER_TABLE_NAME, attributeMap);
         return null;
     }
 
-    private String generateExceptionMessage(Exception e) {
-        return "Failed to query DDb with: " + e.getMessage();
+    private enum FieldType {
+        LOCAL_DATE_TIME,
+        FLOAT,
+        INTEGER,
+        EXERCISE_TYPE,
+        REP_RANGE;
+
+        static FieldType fromClass(Class<?> clazz) throws IllegalAccessException {
+            if (clazz == LocalDateTime.class) return LOCAL_DATE_TIME;
+            else if (clazz == Float.class) return FLOAT;
+            else if (clazz == Integer.class) return INTEGER;
+            else if (clazz == ExerciseType.class) return EXERCISE_TYPE;
+            else if (clazz == RepRange.class) return REP_RANGE;
+            throw new IllegalAccessException(String.format("No %s can be parsed from: %s", FieldType.class.getName() , clazz.getName()));
+        }
     }
 
 }

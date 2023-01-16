@@ -7,6 +7,9 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
+
 @Configuration
 public class ApplicationConfiguration {
 
@@ -20,6 +23,11 @@ public class ApplicationConfiguration {
                 .withRegion(REGION)
                 .withCredentials(CREDENTIALS)
                 .build();
+    }
+
+    @Bean
+    public Validator initializeValidator() {
+        return Validation.buildDefaultValidatorFactory().getValidator();
     }
 
 }

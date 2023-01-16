@@ -2,11 +2,12 @@ package io.michaelarnold.healthtracker.domain;
 
 import io.michaelarnold.healthtracker.data.ExerciseDataPointRepository;
 import io.michaelarnold.healthtracker.model.ExerciseDataPoint;
-import io.michaelarnold.healthtracker.model.ExerciseType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
+import java.util.Set;
 
 @Service
 public class ExerciseDataPointService {
@@ -14,7 +15,20 @@ public class ExerciseDataPointService {
     @Autowired
     ExerciseDataPointRepository repository;
 
-    public List<ExerciseDataPoint> getExerciseDataPoints(ExerciseType exerciseType) {
-        return repository.getExerciseDataPoints(exerciseType);
+    @Autowired
+    Validator validator;
+
+    public Result<ExerciseDataPoint> add(ExerciseDataPoint exerciseDataPoint) {
+        Result<ExerciseDataPoint> result = new Result<>();
+        Set<ConstraintViolation<ExerciseDataPoint>> violations = validator.validate(exerciseDataPoint);
+        if (!violations.isEmpty()) {
+            violations.stream()
+                    .map(ConstraintViolation::getMessage)
+                    .forEach(result::addErrorMessage);
+            return result;
+        }
+        result.setPayload(repository.add(exerciseDataPoint));
+        return result;
     }
+
 }

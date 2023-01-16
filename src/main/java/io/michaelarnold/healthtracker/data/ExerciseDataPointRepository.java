@@ -6,5 +6,8 @@ import io.michaelarnold.healthtracker.model.ExerciseType;
 import java.util.List;
 
 public interface ExerciseDataPointRepository {
-    List<ExerciseDataPoint> getExerciseDataPoints(ExerciseType exerciseType);
+
+    ExerciseDataPoint add(ExerciseDataPoint exerciseDataPoint);
+
+
 }

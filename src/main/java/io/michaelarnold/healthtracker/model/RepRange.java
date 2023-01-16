@@ -1,28 +1,28 @@
 package io.michaelarnold.healthtracker.model;
 
 public enum RepRange {
-    BENCH_PRESS("BENCHPRESS"),
-    BACK_SQUAT("BACKSQUAT"),
-    FRONT_SQUAT("FRONTSQUAT"),
-    OVERHEAD_PRESS("OVERHEADPRESS"),
-    BARBELL_ROW("BARBELLROW"),
-    DEAD_LIFT("DEADLIFT");
 
-    private final String name;
+    THREE_REPS(3),
+    FIVE_REPS(5),
+    TEN_REPS(10),
+    TWENTY_REPS(20);
 
-    public String getName() {
-        return name;
+    private final int reps;
+
+    @Override
+    public String toString() {
+        return Integer.toString(reps);
     }
 
-    RepRange(String name) {
-        this.name = name;
+    RepRange(int reps) {
+        this.reps = reps;
     }
 
-    public static RepRange fromString(String name) throws IllegalAccessException {
-        for (RepRange e: RepRange.values()) {
-            if (e.name.equals(name)) return e;
+    public static RepRange fromString(int reps) throws IllegalAccessException {
+        for (RepRange r: RepRange.values()) {
+            if (r.reps == reps) return r;
         }
-        throw new IllegalAccessException("No ExerciseType can be parsed from: " + name);
+        throw new IllegalAccessException(String.format("No %s can be parsed from: %d", RepRange.class.getName(), reps));
     }
 
 }
