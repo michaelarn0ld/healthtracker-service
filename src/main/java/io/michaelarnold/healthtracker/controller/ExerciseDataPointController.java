@@ -41,13 +41,16 @@ public class ExerciseDataPointController {
         String secret = secretResult.getSecretString();
         JSONObject object = new JSONObject(secret);
         String key = object.getString(HEALTH_TRACKER_POST_KEY);
+        log.info("Fetched key from SecretsManager");
 
         if (!key.equals(accessPin)){
+            log.error("Invalid accessPin from request");
             return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
         }
 
         Result<ExerciseDataPoint> result = service.add(exerciseDataPoint);
         if (!result.isSuccess()) {
+            log.error("Invalid request submitted");
             return new ResponseEntity<>(result.getMessages(), HttpStatus.BAD_REQUEST);
         }
         return new ResponseEntity<>(HttpStatus.CREATED);
